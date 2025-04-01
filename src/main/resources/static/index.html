@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales Chart</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<canvas id="salesChart"></canvas>
+<script>
+  async function fetchSalesData() {
+    const response = await fetch('/api/products'); // Получаем данные с бэка
+    const data = await response.json();
+    return data;
+  }
+
+  function processSalesData(data) {
+    const salesByMonth = {};
+
+    data.forEach(sale => {
+      const month = sale.date.substring(0, 7); // Получаем YYYY-MM
+      salesByMonth[month] = (salesByMonth[month] || 0) + sale.finalPrice;
+    });
+
+    const labels = Object.keys(salesByMonth).sort();
+    const sales = labels.map(month => salesByMonth[month]);
+
+    return { labels, sales };
+  }
+
+  async function createChart() {
+    const salesData = await fetchSalesData();
+    const { labels, sales } = processSalesData(salesData);
+
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Sales by Month',
+          data: sales,
+          borderColor: 'blue',
+          backgroundColor: 'rgba(0, 0, 255, 0.2)',
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: { title: { display: true, text: 'Month' } },
+          y: { title: { display: true, text: 'Total Sales' } }
+        }
+      }
+    });
+  }
+
+  createChart();
+</script>
+</body>
+</html>]
