@@ -1,62 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sales Chart</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body{
+            background-color: #bdbcbc;
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        h1{
+            font-family: Damascus;
+        }
+        #box{
+            display: inline-block;
+            background-color: white;
+            border: 3px solid black;
+            border-radius: 5px;
+            padding: 15px;
+            width: 95%;
+            height: 95%;
+            text-align: center;
+        }
+        button{
+            width: 115px;
+            height: 70px;
+            border: 1px solid #4CAF50;
+            border-radius: 10px;
+            background-color: #6c6ce3;
+            color: white;
+            font-size: 1.2em;
+            transition: background-color 0.5s ease;
+        }
+        button:hover{
+            background-color: rgba(108, 108, 227, 0.85);
+        }
+        label{
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+            text-align: center;
+            font-size: 1.2em;
+            font-family: Arial, sans-serif;
+            transition: background-color 0.3s ease;
+        }
+    </style>
 </head>
 <body>
-<canvas id="salesChart"></canvas>
+
+<div id="box">
+    <h1>Программа для подсчета <br> продаж за каждый месяц</h1>
+    <br>
+    <label for="fileInput">
+        Нажми на зеленое для выбора файла
+        <input type="file" id="fileInput" accept=".xlsx">
+        <button onclick="uploadFile()">Загрузить файл</button>
+    </label>
+    <canvas id="salesChart"></canvas>
+</div>
+
 <script>
-  async function fetchSalesData() {
-    const response = await fetch('/api/products'); // Получаем данные с бэка
-    const data = await response.json();
-    return data;
-  }
-
-  function processSalesData(data) {
-    const salesByMonth = {};
-
-    data.forEach(sale => {
-      const month = sale.date.substring(0, 7); // Получаем YYYY-MM
-      salesByMonth[month] = (salesByMonth[month] || 0) + sale.finalPrice;
-    });
-
-    const labels = Object.keys(salesByMonth).sort();
-    const sales = labels.map(month => salesByMonth[month]);
-
-    return { labels, sales };
-  }
-
-  async function createChart() {
-    const salesData = await fetchSalesData();
-    const { labels, sales } = processSalesData(salesData);
-
-    const ctx = document.getElementById('salesChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Sales by Month',
-          data: sales,
-          borderColor: 'blue',
-          backgroundColor: 'rgba(0, 0, 255, 0.2)',
-          fill: true
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          x: { title: { display: true, text: 'Month' } },
-          y: { title: { display: true, text: 'Total Sales' } }
+    async function uploadFile() {
+        const fileInput = document.getElementById('fileInput');
+        if (!fileInput.files.length) {
+            alert("Please select a file");
+            return;
         }
-      }
-    });
-  }
 
-  createChart();
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+
+        const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            alert("File uploaded successfully!");
+            fetchSalesData();
+            window.location.reload();
+        } else {
+            alert("Failed to upload file");
+        }
+    }
+
+
+
+
+
+    async function fetchSalesData() {
+        const response = await fetch('/api/products'); // Получаем данные с бэка
+        const data = await response.json();
+        return data;
+    }
+
+    function processSalesData(data) {
+        const salesByMonth = {};
+
+        data.forEach(sale => {
+            const month = sale.date.substring(0, 7); // Получаем YYYY-MM
+            salesByMonth[month] = (salesByMonth[month] || 0) + sale.finalPrice;
+        });
+
+        const labels = Object.keys(salesByMonth).sort();
+        const sales = labels.map(month => salesByMonth[month]);
+
+        return { labels, sales };
+    }
+
+    async function createChart() {
+        const salesData = await fetchSalesData();
+        const { labels, sales } = processSalesData(salesData);
+
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Sales',
+                    data: sales,
+                    borderColor: 'blue',
+                    backgroundColor: 'rgba(0, 0, 255, 0.2)',
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { title: { display: true, text: 'Month' } },
+                    y: { title: { display: true, text: 'Total Sales' } }
+                }
+            }
+        });
+    }
+
+    createChart();
 </script>
 </body>
-</html>]
+</html>

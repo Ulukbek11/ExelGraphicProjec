@@ -4,9 +4,12 @@ package org.example.salestracking;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,6 +18,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api")
 public class ProductController {
 
+    List<Product> products;
 
     private final ExcelReader excelReader;
 
@@ -25,16 +29,10 @@ public class ProductController {
 
     @GetMapping("products")
     public List<Product> getProducts() throws IOException {
-        return excelReader.readExcelFile();
+        return products;
     }
-    @GetMapping("/lastMonth")
-    public List<Product> getLastMonthProducts() throws IOException {
-        return excelReader.readExcelFile().stream().filter(
-                product -> product.getDate()
-                        .isAfter(LocalDate.now()
-                                .minusMonths(1)))
-                .collect(Collectors.toList());
-    }
+
+
 
     @GetMapping("/")
     public String index() {
@@ -42,6 +40,13 @@ public class ProductController {
     }
 
 
+    @PostMapping("/upload")
+    public ResponseEntity<String> handleFileUpload(@RequestParam("file") MultipartFile file) throws IOException {
+        // Сохрани файл в resources/static или обработай напрямую
+            this.products = excelReader.readExcelFile(file);
+            return ResponseEntity.ok("File uploaded successfully");
+
+    }
 
 
 
